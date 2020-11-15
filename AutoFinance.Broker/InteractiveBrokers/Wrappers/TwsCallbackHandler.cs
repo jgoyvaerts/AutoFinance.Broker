@@ -752,13 +752,13 @@ namespace AutoFinance.Broker.InteractiveBrokers.Wrappers
         /// <inheritdoc/>
         public void tickOptionComputation(int tickerId, int field, double impliedVolatility, double delta, double optPrice, double pvDividend, double gamma, double vega, double theta, double undPrice)
         {
-            
+            var eventArgs = new TickOptionComputationEventArgs(tickerId, field, impliedVolatility, delta, optPrice, pvDividend, gamma, vega, theta, undPrice);
+            this.TickOptionComputationEvent?.Invoke(this, eventArgs);
         }
 
         /// <inheritdoc/>
         public void tickPrice(int tickerId, int field, double price, int canAutoExecute)
         {
-            
         }
 
         /// <inheritdoc/>

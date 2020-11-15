@@ -742,6 +742,51 @@ namespace AutoFinance.Broker.IntegrationTests.InteractiveBrokers.Controllers
         }
 
         /// <summary>
+        /// Test that market option data events come back from TWS properly
+        /// </summary>
+        /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
+        [Fact]
+        public async Task MarketOptionDataController_Should_ReturnMarketDataType()
+        {
+            TwsObjectFactory twsObjectFactory = new TwsObjectFactory("localhost", 7497, 1);
+            ITwsControllerBase twsController = twsObjectFactory.TwsControllerBase;
+
+            await twsController.EnsureConnectedAsync();
+
+            MarketDataTypeEventArgs marketDataTypeEventArgs = null;
+            TickPriceEventArgs tickPriceEventArgs = null;
+            TickOptionComputationEventArgs tickOptionComputationEventArgs = null;
+            twsObjectFactory.TwsCallbackHandler.MarketDataTypeEvent +=
+                (sender, args) => { marketDataTypeEventArgs = args; };
+            twsObjectFactory.TwsCallbackHandler.TickPriceEvent +=
+                (sender, args) => { tickPriceEventArgs = args; };
+            twsObjectFactory.TwsCallbackHandler.TickOptionComputationEvent +=
+                (sender, args) => { tickOptionComputationEventArgs = args; };
+
+            
+            Contract contract = new Contract
+            {
+                SecType = TwsContractSecType.Option,
+                Symbol = "MSFT",
+                Exchange = TwsExchange.Smart,
+                Multiplier = "100",
+                Currency = "USD",
+                Right = "C",
+                Strike = 200,
+                LastTradeDateOrContractMonth = "20201113"
+            };
+
+            twsObjectFactory.TwsControllerBase.RequestMarketDataType(1);
+            var marketDataResult = await twsObjectFactory.TwsControllerBase.RequestMarketDataAsync(contract, null, false, false, null);
+
+            marketDataResult.Should().NotBeNull();
+            tickPriceEventArgs.Should().NotBeNull();
+            tickPriceEventArgs.TickerId.Should().IsSameOrEqualTo(marketDataResult.TickerId);
+            tickOptionComputationEventArgs.Should().NotBeNull();
+            tickOptionComputationEventArgs.TickerId.Should().IsSameOrEqualTo(marketDataResult.TickerId);
+        }
+
+        /// <summary>
         /// Test that pnl type events come back from TWS properly
         /// </summary>
         /// <returns>A <see cref="Task"/> representing the asynchronous unit test.</returns>
